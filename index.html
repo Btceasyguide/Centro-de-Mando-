@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="es" data-theme="nocturno">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Candado de privacidad: la página solo puede conectarse a estas tres fuentes. Nada más. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; worker-src 'self'; manifest-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src https://mempool.space http://*:3006 http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Centro de mando</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0A0A18">
+<style>
+/* ===== Temas ===== */
+:root,[data-theme="nocturno"]{--bg:#0A0A18;--orb1:#4C1D95;--orb2:#0E7490;--panel:rgba(22,22,44,.62);--cell:rgba(255,255,255,.04);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.05);
+  --txt:#ECEBFF;--mut:#A3A3C2;--sub:#CFCDEB;--accent:#A78BFA;--accent2:#22D3EE;--pos:#4ADE80;--neg:#FB7185;--warn:#FBBF24;--onAccent:#0A0A18}
+[data-theme="boveda"]{--bg:#06110D;--orb1:#065F46;--orb2:#78350F;--panel:rgba(12,32,26,.62);--cell:rgba(255,255,255,.04);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.05);
+  --txt:#E8F5EF;--mut:#9DB8AC;--sub:#CBE3D8;--accent:#34D399;--accent2:#FBBF24;--pos:#4ADE80;--neg:#FB7185;--warn:#FBBF24;--onAccent:#06110D}
+[data-theme="bitcoin"]{--bg:#0D1117;--orb1:#7C2D12;--orb2:#1E3A5F;--panel:rgba(22,27,34,.7);--cell:rgba(255,255,255,.035);--line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.05);
+  --txt:#E6EDF3;--mut:#9AA4B2;--sub:#C9D1D9;--accent:#F7931A;--accent2:#79C0FF;--pos:#3FB950;--neg:#FF7B72;--warn:#F0B72F;--onAccent:#0D1117}
+[data-theme="claro"]{--bg:#F4F5FB;--orb1:#DDD6FE;--orb2:#CFFAFE;--panel:rgba(255,255,255,.78);--cell:rgba(15,23,42,.04);--line:rgba(15,23,42,.10);--line2:rgba(15,23,42,.06);
+  --txt:#0F172A;--mut:#556070;--sub:#334155;--accent:#6D28D9;--accent2:#0E7490;--pos:#15803D;--neg:#BE123C;--warn:#B45309;--onAccent:#FFFFFF}
+:root{--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;--r:18px}
+
+/* ===== Base ===== */
+*{box-sizing:border-box}
+html{color-scheme:dark}[data-theme="claro"]{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden;transition:background .6s,color .6s}
+a{color:var(--accent)}
+.orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orbs i{position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(90px);opacity:.45;transition:background .8s}
+.orbs i:nth-child(1){background:var(--orb1);top:-20vmax;left:-15vmax;animation:drift1 28s ease-in-out infinite alternate}
+.orbs i:nth-child(2){background:var(--orb2);bottom:-25vmax;right:-15vmax;animation:drift2 34s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(18vmax,14vmax) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-16vmax,-12vmax) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:24px 32px 64px;display:flex;flex-direction:column;gap:20px}
+@media (max-width:600px){.wrap{padding:16px 14px 48px}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0;backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s,background .6s}
+.panel:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 18px 40px -22px color-mix(in srgb,var(--accent) 70%,transparent)}
+.hero{border:1px solid transparent;background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,var(--accent),var(--accent2)) border-box}
+.lbl{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:0}
+.num{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.big{font-size:30px;margin:10px 0 4px;letter-spacing:-.01em}
+.grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.h2{font-size:16px;font-weight:650;margin:0}
+.sec{font-size:24px;font-weight:750;margin:16px 0 0;letter-spacing:-.01em}
+.muted{color:var(--mut);font-size:13px;margin:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tag{font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid var(--line);color:var(--sub);white-space:nowrap;background:var(--cell)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.flex{display:flex;flex-wrap:wrap;gap:16px}
+.cell{background:var(--cell);border-radius:12px;padding:12px}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+
+.btn{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--accent);background:transparent;color:var(--accent);font:600 14px system-ui,sans-serif;cursor:pointer;transition:background .2s,color .2s,transform .15s}
+.btn:hover{background:var(--accent);color:var(--onAccent)}
+.btn:active{transform:scale(.97)}
+.btn.sec2{border-color:var(--line);color:var(--sub)}.btn.sec2:hover{background:var(--cell);color:var(--txt)}
+.btn:focus-visible,.inp:focus-visible,select:focus-visible,a:focus-visible,.sw:focus-visible,.del:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.inp,select{width:100%;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--cell);color:var(--txt);font:600 16px var(--mono);transition:border-color .2s}
+.inp:focus{border-color:var(--accent)}
+select{font-family:system-ui,sans-serif;font-weight:500;font-size:14px;width:auto}
+select option{background:var(--bg);color:var(--txt)}
+nav{display:flex;flex-wrap:wrap;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;backdrop-filter:blur(16px)}
+nav a{color:var(--mut);text-decoration:none;padding:12px 14px;border-radius:10px;font-weight:500;font-size:14px;transition:background .2s,color .2s}
+nav a:hover{color:var(--txt);background:var(--cell)}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--onAccent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:21px;box-shadow:0 8px 24px -8px var(--accent)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut);display:inline-block;position:relative}
+.dot.live{background:var(--pos)}
+.dot.live::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--pos);animation:ping 1.8s cubic-bezier(0,0,.2,1) infinite}
+@keyframes ping{75%,100%{transform:scale(2.6);opacity:0}}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0;transition:transform .2s,border-color .2s}
+.sw:hover{transform:scale(1.12)}.sw[aria-pressed="true"]{border-color:var(--txt);transform:scale(1.12)}
+
+/* ===== Progreso ===== */
+.bar{height:10px;background:var(--cell);border-radius:99px;margin:10px 0;overflow:hidden;position:relative}
+.bar>div{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 1.4s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
+.bar>div::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-100%);animation:shimmer 2.6s infinite}
+@keyframes shimmer{to{transform:translateX(100%)}}
+.ring{width:150px;height:150px;flex:none}
+.ring circle{fill:none;stroke-width:12}
+.ring .trk{stroke:var(--cell)}
+.ring .val{stroke:url(#ringGrad);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1.6s cubic-bezier(.2,.8,.2,1)}
+
+/* ===== Cadena en vivo ===== */
+.chain{display:flex;align-items:stretch;gap:14px;overflow-x:auto;padding:8px 2px 14px;scroll-snap-type:x proximity}
+.chain::-webkit-scrollbar{height:6px}.chain::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+.blk{flex:none;width:132px;height:132px;border-radius:14px;position:relative;overflow:hidden;scroll-snap-align:center;border:1px solid var(--line);background:var(--cell);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;text-align:center;animation:blkIn .7s cubic-bezier(.2,.8,.2,1) both;transform-style:preserve-3d}
+.blk .fill{position:absolute;left:0;right:0;bottom:0;z-index:0;transition:height 1.2s cubic-bezier(.2,.8,.2,1)}
+.blk.pend .fill{background:linear-gradient(to top,color-mix(in srgb,var(--accent) 75%,transparent),color-mix(in srgb,var(--accent) 25%,transparent))}
+.blk.mined .fill{height:100%;background:linear-gradient(160deg,color-mix(in srgb,var(--accent2) 55%,transparent),color-mix(in srgb,var(--accent2) 15%,transparent))}
+.blk>*:not(.fill){position:relative;z-index:1}
+.blk b{font:700 16px var(--mono)}.blk small{font-size:11px;color:var(--sub)}
+.blk.next{box-shadow:0 0 0 1px var(--accent),0 0 28px -6px var(--accent)}
+.blk.next::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);animation:sweep 3s ease-in-out infinite}
+@keyframes sweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+@keyframes blkIn{from{opacity:0;transform:translateY(16px) rotateX(25deg)}to{opacity:1;transform:none}}
+.divider{flex:none;width:2px;margin:6px 4px;background:repeating-linear-gradient(to bottom,var(--mut) 0 6px,transparent 6px 12px);animation:dash 1s linear infinite;background-size:2px 12px}
+@keyframes dash{to{background-position:0 12px}}
+
+/* ===== DCA ===== */
+#chart .dotp{transform-box:fill-box;transform-origin:center;animation:pop .5s cubic-bezier(.2,1.6,.4,1) both;cursor:pointer}
+#chart .dotp:hover{stroke:var(--txt);stroke-width:2}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+#chart .draw{animation:draw 1.6s ease-out both}
+@keyframes draw{from{stroke-dashoffset:var(--len,1000)}to{stroke-dashoffset:0}}
+#chart .fade{animation:fadeIn 1.2s ease-out both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#bars{display:flex;align-items:flex-end;gap:6px;height:190px;border-bottom:1px solid var(--line)}
+#bars div{flex:1;min-width:3px;border-radius:7px 7px 2px 2px;background:color-mix(in srgb,var(--accent) 35%,transparent);transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+#bars div.top{background:linear-gradient(to top,var(--accent),var(--accent2))}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+th{text-align:left;font-weight:500;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line2);font-size:14px;white-space:nowrap}
+tbody tr{animation:fadeIn .5s both}
+tbody tr:hover{background:var(--cell)}
+.del{min-height:36px;min-width:36px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font:inherit;transition:color .2s,border-color .2s}
+.del:hover{color:var(--neg);border-color:var(--neg)}
+pre{margin:0;white-space:pre-wrap;word-break:break-all;font:13px var(--mono);color:var(--sub);background:var(--cell);border-radius:12px;padding:12px}
+.err{color:var(--neg)}
+
+/* ===== Efectos ===== */
+.reveal{opacity:0;transform:translateY(18px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.flash-up{animation:flUp 1.4s ease}.flash-down{animation:flDown 1.4s ease}
+@keyframes flUp{0%{text-shadow:0 0 18px var(--pos);color:var(--pos)}100%{text-shadow:none}}
+@keyframes flDown{0%{text-shadow:0 0 18px var(--neg);color:var(--neg)}100%{text-shadow:none}}
+.toast{position:fixed;right:20px;bottom:20px;z-index:10;max-width:340px;padding:14px 18px;border-radius:14px;background:var(--panel);border:1px solid var(--accent);backdrop-filter:blur(16px);
+  box-shadow:0 20px 50px -20px var(--accent);transform:translateY(140%);opacity:0;transition:transform .5s cubic-bezier(.2,1.2,.3,1),opacity .4s}
+.toast.show{transform:none;opacity:1}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="orbs" aria-hidden="true"><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent2)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient></defs></svg>
+<div class="wrap">
+
+<header class="row">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo" aria-hidden="true">B</div>
+    <div><p style="margin:0;font-weight:750;font-size:17px">BtcEasy <span class="tag" style="color:var(--accent);border-color:var(--accent);vertical-align:middle">BETA v0.6</span></p><p class="muted" style="font-size:12px">Centro de mando</p></div>
+  </div>
+  <nav aria-label="Secciones"><a href="#red">Red</a><a href="#cadena">Cadena</a><a href="#dca">DCA</a><a href="#avisos">Avisos</a></nav>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div role="group" aria-label="Tema de colores" style="display:flex;gap:8px;align-items:center">
+      <button class="sw" type="button" data-t="nocturno" aria-label="Tema Nocturno" style="background:linear-gradient(135deg,#A78BFA,#22D3EE)"></button>
+      <button class="sw" type="button" data-t="boveda" aria-label="Tema Bóveda" style="background:linear-gradient(135deg,#34D399,#FBBF24)"></button>
+      <button class="sw" type="button" data-t="bitcoin" aria-label="Tema Bitcoin" style="background:linear-gradient(135deg,#F7931A,#0D1117)"></button>
+      <button class="sw" type="button" data-t="claro" aria-label="Tema Claro" style="background:linear-gradient(135deg,#FFFFFF,#6D28D9)"></button>
+    </div>
+    <label for="src" class="muted">Fuente</label>
+    <select id="src">
+      <option value="umbrel">Mi nodo Umbrel</option>
+      <option value="mempool">mempool.space</option>
+      <option value="onion">mempool.space .onion (Tor Browser)</option>
+    </select>
+    <span class="tag" style="display:flex;align-items:center;gap:7px;padding:8px 12px"><span id="dot" class="dot"></span><span id="status">Conectando…</span></span>
+    <button class="btn" id="install" type="button" hidden>Instalar app</button>
+  </div>
+</header>
+
+<div role="note" class="panel reveal" style="border-color:color-mix(in srgb,var(--warn) 45%,transparent);padding:14px 18px">
+  <p style="margin:0;font-size:14px;color:var(--sub)"><strong style="color:var(--warn)">Versión beta en pruebas.</strong> Puede tener errores. Respalda tu registro con frecuencia con «Descargar respaldo cifrado» y guarda una copia en otro lugar seguro.</p>
+</div>
+
+<div id="red" class="row reveal" style="align-items:flex-end">
+  <div><h1 style="margin:0;font-size:32px;letter-spacing:-.02em">Estado de la <span class="grad">red</span></h1>
+  <p class="muted" style="margin-top:4px">Solo datos públicos. Firmantes, xpubs y UTXOs quedan en Sparrow. Los datos de red no se guardan.</p></div>
+  <span class="tag" id="updated">Actualizado: —</span>
+</div>
+
+<section class="grid" aria-label="Indicadores">
+  <div class="panel hero reveal"><p class="lbl">Precio BTC</p><p class="num big grad" id="price">—</p><p class="muted" id="priceAge">—</p></div>
+  <div class="panel reveal"><p class="lbl">Altura de bloque</p><p class="num big" id="height">—</p><p class="muted" id="retargetIn">—</p></div>
+  <div class="panel reveal"><p class="lbl">Fee prioritaria</p><p class="num big"><span id="feeFast">—</span> <span style="font-size:16px;color:var(--mut)">sat/vB</span></p><p class="muted" id="feeRest">—</p></div>
+  <div class="panel reveal"><p class="lbl">Sats por dólar</p><p class="num big" id="spd">—</p><p class="muted" id="mempool">—</p></div>
+</section>
+
+<section id="cadena" class="panel reveal" aria-label="La cadena en vivo" style="display:flex;flex-direction:column;gap:10px">
+  <div class="row"><h2 class="h2">La cadena en vivo</h2><span class="tag">← en espera · minados →</span></div>
+  <div class="chain" id="chain" aria-live="polite"><p class="muted">Esperando datos…</p></div>
+  <p class="muted" style="font-size:12px">Izquierda: próximos bloques que se están armando en el mempool (el relleno indica qué tan lleno está). Derecha: últimos bloques minados.</p>
+</section>
+
+<div class="flex">
+  <section class="panel reveal" aria-label="Ciclos" style="flex:1 1 420px;display:flex;flex-direction:column;gap:18px">
+    <h2 class="h2">Ciclos de la red</h2>
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <svg class="ring" viewBox="0 0 150 150" role="img" aria-label="Avance hacia el próximo halving" id="halvRing">
+        <circle class="trk" cx="75" cy="75" r="62"></circle>
+        <circle class="val" id="halvArc" cx="75" cy="75" r="62" stroke-dasharray="389.56" stroke-dashoffset="389.56"></circle>
+        <text x="75" y="72" text-anchor="middle" fill="currentColor" style="font:700 24px ui-monospace,monospace" id="halvPct">—</text>
+        <text x="75" y="94" text-anchor="middle" fill="currentColor" opacity=".65" style="font:11px system-ui,sans-serif">al halving</text>
+      </svg>
+      <div style="flex:1;min-width:200px">
+        <p class="lbl">Próximo halving · bloque 1,050,000</p>
+        <p class="num" style="font-size:20px;margin:8px 0 4px" id="halvDate">—</p>
+        <p class="muted" id="halvTxt">—</p>
+      </div>
+    </div>
+    <div>
+      <div class="row"><p class="lbl">Ajuste de dificultad</p><span class="muted" id="diffDate">—</span></div>
+      <div class="bar" role="progressbar" aria-label="Avance hacia el ajuste de dificultad" id="diffBarWrap" aria-valuemin="0" aria-valuemax="100"><div id="diffBar"></div></div>
+      <p class="muted" id="diffTxt">—</p>
+    </div>
+  </section>
+
+  <section class="panel reveal" aria-label="Calculadora de fee" style="flex:1 1 360px;display:flex;flex-direction:column;gap:14px">
+    <div class="row"><h2 class="h2">Calculadora de fee</h2><span class="tag">No guarda nada</span></div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Tamaño (vB)</span><input class="inp" id="vb" type="number" min="1" value="141"></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Tasa (sat/vB)</span><input class="inp" id="rate" type="number" min="1" value="10"></label>
+    </div>
+    <div class="cell hero" style="border-radius:14px">
+      <p class="lbl">Costo de la transacción</p>
+      <p class="num grad" style="margin:6px 0 2px;font-size:28px"><span id="feeSats">—</span> sats</p>
+      <p class="muted" id="feeUsd">—</p>
+    </div>
+    <p class="muted" style="font-size:12px">Referencia: 1 entrada y 2 salidas SegWit nativa ≈ 141 vB. Cada entrada extra suma ≈ 68 vB.</p>
+  </section>
+</div>
+
+<div id="dca" class="row reveal" style="align-items:flex-end">
+  <div>
+    <h2 class="sec">Mi <span class="grad">DCA</span></h2>
+    <p class="muted" style="margin-top:4px">Tus compras se guardan cifradas con tu contraseña. Sin ella son ilegibles.</p>
+  </div>
+  <div id="unlockedActions" hidden style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn sec2" id="backup" type="button">Descargar respaldo cifrado</button>
+    <button class="btn" id="lock" type="button">Bloquear</button>
+  </div>
+</div>
+
+<section class="panel reveal" id="vaultPanel" aria-label="Acceso al registro" style="display:flex;flex-direction:column;gap:12px">
+  <h2 class="h2" id="vaultTitle">Mi registro</h2>
+  <p class="muted" id="vaultHelp"></p>
+  <div id="fileStep" class="row" style="justify-content:flex-start" hidden>
+    <button class="btn" id="openFile" type="button">Abrir mi registro</button>
+    <button class="btn sec2" id="newFile" type="button">Crear registro nuevo</button>
+    <button class="btn sec2" id="migrate" type="button" hidden>Pasar mi registro del navegador a un archivo</button>
+  </div>
+  <p class="num" id="fileName" style="margin:0;font-size:13px;color:var(--sub)" hidden></p>
+  <form id="vaultForm" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end">
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Contraseña</span><input class="inp" id="pw" type="password" autocomplete="current-password" required></label>
+      <label id="pw2Wrap" hidden style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Repite la contraseña</span><input class="inp" id="pw2" type="password" autocomplete="new-password"></label>
+      <button class="btn" type="submit" id="vaultBtn">Desbloquear</button>
+    </div>
+  </form>
+  <p class="muted err" id="vaultMsg" role="status"></p>
+  <div id="localExtras" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="row" style="justify-content:flex-start"><label class="btn" for="restore" style="display:flex;align-items:center">Abrir mi último respaldo</label><input id="restore" type="file" accept=".json,application/json" class="sr"><button class="btn sec2" id="newLocal" type="button" hidden>Es mi primera vez: crear registro</button></div>
+    <p class="muted" style="color:var(--sub)">Aquí no se puede guardar directo en un archivo, así que <strong>cada vez que guardas o borras una compra se descarga sola una copia cifrada</strong> en tu carpeta Descargas. Al volver, abre la más reciente (la de fecha y hora más nueva). Así no pierdes nada aunque el navegador borre sus datos.</p>
+    <p class="muted" style="font-size:12px">En la PC con Brave puedes guardar directo en un archivo: abre <span class="num">brave://flags</span>, busca «File System Access API», actívala y reinicia Brave.</p>
+  </div>
+</section>
+
+<section class="panel reveal" id="addPanel" hidden aria-label="Registrar compra">
+  <form id="addForm" style="display:flex;flex-direction:column;gap:12px">
+    <div class="row"><h2 class="h2">Registrar compra</h2><span class="tag">Se guarda cifrado</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Fecha</span><input class="inp" id="fDate" type="date" required></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">USD pagados</span><input class="inp" id="fUsd" type="number" min="0.01" step="0.01" inputmode="decimal" required></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Precio BTC (USD)</span><input class="inp" id="fPrice" type="number" min="1" step="0.01" inputmode="decimal" required></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Sats recibidos</span><input class="inp" id="fSats" type="number" min="1" step="1" inputmode="numeric" required></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span class="lbl">Vía (opcional)</span><input class="inp" id="fVia" type="text" maxlength="40" style="font-family:system-ui,sans-serif" placeholder="P2P, Bisq…"></label>
+    </div>
+    <p class="muted" style="font-size:12px">Los sats se calculan con USD ÷ precio. Si te llegó otra cantidad por comisiones, corrígela: así tu costo promedio es real.</p>
+    <div class="row" style="justify-content:flex-start"><button class="btn" type="submit">Guardar compra</button><span class="muted" id="addMsg" role="status"></span></div>
+  </form>
+</section>
+
+<section class="grid" aria-label="Resumen DCA">
+  <div class="panel hero reveal"><p class="lbl">Sats acumulados</p><p class="num big grad" id="dSats">—</p><p class="muted" id="dCount">—</p></div>
+  <div class="panel reveal"><p class="lbl">Costo promedio</p><p class="num big" id="dAvg">—</p><p class="muted" id="dInv">—</p></div>
+  <div class="panel reveal"><p class="lbl">Valor actual</p><p class="num big" id="dVal">—</p><p class="muted" id="dPnl">—</p></div>
+  <div class="panel reveal"><p class="lbl">Hoy vs tu promedio</p><p class="num big" id="dVs">—</p><p class="muted" id="dVsTxt">—</p></div>
+</section>
+
+<div class="flex">
+  <section class="panel reveal" aria-label="Precio de cada compra" style="flex:2 1 560px;display:flex;flex-direction:column;gap:12px">
+    <div class="row"><h2 class="h2">Precio de cada compra</h2><span class="tag">Sin consultas externas</span></div>
+    <svg id="chart" role="img" aria-label="Precio pagado en cada compra, con tu costo promedio y el precio actual" viewBox="0 0 600 250" style="width:100%;height:auto;color:var(--txt)"></svg>
+    <p class="num" id="chartInfo" style="margin:0;font-size:13px;color:var(--sub);min-height:18px">Toca un punto para ver la compra.</p>
+    <p class="muted" style="font-size:12px">Cada punto es una compra. Línea punteada: tu costo promedio. Línea sólida: precio actual.</p>
+  </section>
+  <section class="panel reveal" aria-label="Sats por compra" style="flex:1 1 320px;display:flex;flex-direction:column;gap:12px">
+    <h2 class="h2">Sats por compra</h2>
+    <div id="bars" aria-hidden="true"></div>
+    <p class="muted">Mismo monto en USD: cuando el precio baja, la barra sube. La resaltada es tu compra con más sats.</p>
+  </section>
+</div>
+
+<section class="panel reveal" id="listPanel" hidden aria-label="Mis compras" style="display:flex;flex-direction:column;gap:12px">
+  <div class="row"><h2 class="h2">Mis compras</h2><span class="tag" id="listCount"></span></div>
+  <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:620px">
+    <thead><tr><th>Fecha</th><th>USD</th><th>Precio</th><th>Sats</th><th>Vía</th><th><span class="sr">Acciones</span></th></tr></thead>
+    <tbody id="listBody"></tbody>
+  </table></div>
+</section>
+
+<section id="avisos" class="panel reveal" aria-label="Avisos de firmware" style="display:flex;flex-direction:column;gap:12px">
+  <div class="row"><h2 class="h2">Avisos de firmware</h2><span class="tag">Por RSS</span></div>
+  <p class="muted">Suscribe estos enlaces en una app de RSS (Feeder en Android, NetNewsWire en iPhone). Sin cuenta, número ni correo.</p>
+  <pre id="feeds">https://github.com/bitcoin/bitcoin/releases.atom
+https://github.com/Coldcard/firmware/tags.atom
+https://github.com/Foundation-Devices/passport2/tags.atom
+https://github.com/Blockstream/Jade/tags.atom</pre>
+  <div class="row" style="justify-content:flex-start"><button class="btn" id="copy" type="button">Copiar enlaces</button><span class="muted" id="copyMsg" role="status"></span></div>
+</section>
+
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+// ===== Configuración =====
+// Si tu Umbrel usa otra dirección, cambia solo "umbrel.local" (el puerto 3006 es el de la app mempool).
+const SOURCES = {
+  umbrel:  'http://umbrel.local:3006/api',
+  mempool: 'https://mempool.space/api',
+  onion:   'http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api'
+};
+const IS_WEB = location.protocol === 'https:';
+// En la versión publicada (https) el navegador bloquea direcciones http, así que tu Umbrel y el .onion solo funcionan en el archivo local.
+const DEFAULT_SOURCE = IS_WEB ? 'mempool' : 'umbrel';
+const REFRESH_MS = 60000;
+const HALVING_HEIGHT = 1050000, HALVING_INTERVAL = 210000;
+const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ===== Funciones puras (sin DOM) =====
+// PURE-START
+function dcaStats(rows, price) {
+  const sats = rows.reduce((s, r) => s + r.sats, 0);
+  const usd = rows.reduce((s, r) => s + r.usd, 0);
+  const avg = sats ? usd / sats * 1e8 : NaN;
+  const value = price > 0 ? sats / 1e8 * price : NaN;
+  return {
+    sats, usd, avg, count: rows.length, value,
+    pnlPct: price > 0 && usd ? (value / usd - 1) * 100 : NaN,
+    vsAvgPct: price > 0 && avg ? (price / avg - 1) * 100 : NaN
+  };
+}
+function satsFrom(usd, price) { return usd > 0 && price > 0 ? Math.round(usd / price * 1e8) : NaN; }
+// PURE-END
+
+// ===== Estado (solo en memoria) =====
+let source = DEFAULT_SOURCE, price = NaN, rows = [], timer = null, rateTouched = false;
+let key = null, salt = null, kdfIter = 0, satsTouched = false, priceTouched = false, lastActive = Date.now();
+let lastHeight = null, lastPendingSig = '', dcaData = '', dcaPrice = null;
+const dateOf = r => new Date(r.d + 'T00:00:00');
+const $ = id => document.getElementById(id);
+const fmt = (n, d = 0) => isFinite(n) ? n.toLocaleString('es-EC', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+const usd = (n, d = 0) => isFinite(n) ? '$' + fmt(n, d) : '—';
+const pct = n => isFinite(n) ? (n > 0 ? '+' : '') + fmt(n, 1) + '%' : '—';
+const fdate = ms => new Date(ms).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' });
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const ago = ts => { const m = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60)); return m < 1 ? 'ahora' : m < 60 ? 'hace ' + m + ' min' : 'hace ' + Math.round(m / 60) + ' h'; };
+
+// ===== Animaciones =====
+function tween(elm, to, format) {
+  if (!elm) return;
+  if (!isFinite(to)) { elm.textContent = format(NaN); elm._v = undefined; return; }
+  const from = isFinite(elm._v) ? elm._v : (REDUCED ? to : to * 0.6);
+  elm._v = to;
+  if (REDUCED || from === to) { elm.textContent = format(to); return; }
+  const t0 = performance.now(), dur = 900;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    elm.textContent = format(from + (to - from) * e);
+    if (k < 1 && elm._v === to) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function flash(elm, up) {
+  elm.classList.remove('flash-up', 'flash-down'); void elm.offsetWidth;
+  elm.classList.add(up ? 'flash-up' : 'flash-down');
+}
+let toastT = null;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 5000);
+}
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.08 }) : null;
+document.querySelectorAll('.reveal').forEach((n, i) => { n.style.transitionDelay = Math.min(i, 6) * 60 + 'ms'; io ? io.observe(n) : n.classList.add('in'); });
+
+// ===== Temas =====
+function applyTheme(t) {
+  if (!['nocturno', 'boveda', 'bitcoin', 'claro'].includes(t)) t = 'nocturno';
+  document.documentElement.dataset.theme = t;
+  document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === t ? 'true' : 'false'));
+  try { localStorage.setItem('btceasy-theme', t); } catch (_) {}
+  dcaData = ''; renderDCA();
+}
+document.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.t)));
+
+// ===== Datos de red =====
+async function getJSON(path) {
+  const r = await fetch(SOURCES[source] + path, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function refresh() {
+  const [pr, fe, mp, df, mb, bl] = await Promise.allSettled([
+    getJSON('/v1/prices'), getJSON('/v1/fees/recommended'), getJSON('/mempool'), getJSON('/v1/difficulty-adjustment'),
+    getJSON('/v1/fees/mempool-blocks'), getJSON('/v1/blocks')
+  ]);
+  const okCount = [pr, fe, mp, df].filter(x => x.status === 'fulfilled').length;
+  $('dot').className = 'dot' + (okCount === 4 ? ' live' : '');
+  $('dot').style.background = okCount === 4 ? '' : okCount ? 'var(--warn)' : 'var(--neg)';
+  $('status').textContent = okCount === 4 ? 'Conectado' : okCount ? 'Datos parciales' : 'Sin conexión con la fuente';
+  if (okCount) $('updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+
+  if (pr.status === 'fulfilled' && pr.value.USD > 0) {
+    const old = price; price = pr.value.USD;
+    tween($('price'), price, v => usd(v));
+    if (isFinite(old) && old !== price) flash($('price'), price > old);
+    $('priceAge').textContent = 'Precio de hace ' + Math.max(0, Math.round((Date.now() / 1000 - pr.value.time) / 60)) + ' min · ' + (source === 'umbrel' ? 'tu nodo' : 'mempool.space');
+    tween($('spd'), 1e8 / price, v => fmt(v));
+    if (key) prefillPrice();
+  }
+  if (fe.status === 'fulfilled') {
+    const f = fe.value;
+    tween($('feeFast'), f.fastestFee, v => fmt(v));
+    $('feeRest').textContent = 'Media ' + fmt(f.halfHourFee) + ' · Baja ' + fmt(f.hourFee) + ' · Mínima ' + fmt(f.minimumFee);
+    if (!rateTouched) $('rate').value = Math.max(1, Math.round(f.halfHourFee));
+  }
+  if (mp.status === 'fulfilled') $('mempool').textContent = 'Mempool: ' + fmt(mp.value.vsize / 1e6, 1) + ' vMB · ' + fmt(mp.value.count) + ' tx';
+  if (df.status === 'fulfilled') {
+    const d = df.value, height = d.nextRetargetHeight - d.remainingBlocks;
+    if (lastHeight !== null && height > lastHeight) toast('Nuevo bloque minado: #' + fmt(height));
+    lastHeight = height;
+    tween($('height'), height, v => fmt(v));
+    $('retargetIn').textContent = fmt(d.remainingBlocks) + ' bloques para el ajuste';
+    $('diffBar').style.width = Math.min(100, d.progressPercent) + '%';
+    $('diffBarWrap').setAttribute('aria-valuenow', Math.round(d.progressPercent));
+    $('diffDate').textContent = '≈ ' + fdate(d.estimatedRetargetDate);
+    $('diffTxt').textContent = 'Cambio estimado: ' + pct(d.difficultyChange) + ' · ' + fmt(d.remainingBlocks) + ' bloques restantes';
+    const left = HALVING_HEIGHT - height, prog = Math.max(0, Math.min(100, (1 - left / HALVING_INTERVAL) * 100));
+    const avgMs = d.timeAvg > 0 ? d.timeAvg : 600000;
+    $('halvArc').style.strokeDashoffset = (389.56 * (1 - prog / 100)).toFixed(2);
+    $('halvRing').setAttribute('aria-label', 'Avance hacia el próximo halving: ' + fmt(prog, 1) + '%');
+    tween($('halvPct'), prog, v => fmt(v, 1) + '%');
+    $('halvDate').textContent = left > 0 ? '≈ ' + fdate(Date.now() + left * avgMs) : '—';
+    $('halvTxt').textContent = 'Subsidio pasa de 3.125 a 1.5625 BTC · ' + fmt(left) + ' bloques restantes';
+  }
+  renderChain(mb.status === 'fulfilled' ? mb.value : null, bl.status === 'fulfilled' ? bl.value : null);
+  updateFee();
+  renderDCA();
+}
+
+function renderChain(pending, mined) {
+  const box = $('chain');
+  if (!pending && !mined) { if (!box.querySelector('.blk')) box.innerHTML = '<p class="muted">Sin datos de bloques de esta fuente.</p>'; return; }
+  const sig = JSON.stringify([(pending || []).slice(0, 4).map(b => [b.nTx, Math.round(b.medianFee)]), (mined || []).slice(0, 4).map(b => b.height)]);
+  if (sig === lastPendingSig) return;
+  lastPendingSig = sig;
+  const frag = document.createDocumentFragment();
+  (pending || []).slice(0, 4).reverse().forEach((b, idx, arr) => {
+    const pos = arr.length - idx; // 1 = el siguiente bloque
+    const d = document.createElement('div'); d.className = 'blk pend' + (pos === 1 ? ' next' : '');
+    d.style.animationDelay = idx * 90 + 'ms';
+    const fill = document.createElement('div'); fill.className = 'fill'; fill.style.height = Math.min(100, b.blockVSize / 1e6 * 100) + '%';
+    const t1 = document.createElement('b'); t1.textContent = '~' + fmt(b.medianFee, b.medianFee < 10 ? 1 : 0);
+    const t2 = document.createElement('small'); t2.textContent = 'sat/vB';
+    const t3 = document.createElement('small'); t3.textContent = fmt(b.nTx) + ' tx';
+    const t4 = document.createElement('small'); t4.textContent = 'en ~' + pos * 10 + ' min';
+    d.append(fill, t1, t2, t3, t4);
+    d.title = 'Rango ' + fmt(b.feeRange[0], 1) + '–' + fmt(b.feeRange[b.feeRange.length - 1], 0) + ' sat/vB';
+    frag.append(d);
+  });
+  // en el DOM, el siguiente bloque queda junto a la línea divisoria
+  const pendNodes = Array.from(frag.childNodes);
+  const div = document.createElement('div'); div.className = 'divider'; div.setAttribute('aria-hidden', 'true');
+  const frag2 = document.createDocumentFragment();
+  pendNodes.forEach(n => frag2.append(n));
+  frag2.append(div);
+  (mined || []).slice(0, 4).forEach((b, i) => {
+    const d = document.createElement('div'); d.className = 'blk mined'; d.style.animationDelay = (i + 4) * 90 + 'ms';
+    const fill = document.createElement('div'); fill.className = 'fill';
+    const t1 = document.createElement('b'); t1.textContent = '#' + fmt(b.height);
+    const t2 = document.createElement('small'); t2.textContent = ago(b.timestamp);
+    const t3 = document.createElement('small'); t3.textContent = (b.extras && b.extras.pool && b.extras.pool.name) || '—';
+    const t4 = document.createElement('small'); t4.textContent = fmt(b.tx_count) + ' tx' + (b.extras && b.extras.medianFee ? ' · ~' + fmt(b.extras.medianFee, 0) + ' sat/vB' : '');
+    d.append(fill, t1, t2, t3, t4);
+    frag2.append(d);
+  });
+  box.replaceChildren(frag2);
+  const first = box.querySelector('.divider');
+  if (first && box.scrollWidth > box.clientWidth) box.scrollLeft = Math.max(0, first.offsetLeft - box.clientWidth / 2);
+}
+
+function updateFee() {
+  const vb = Math.max(0, parseInt($('vb').value, 10) || 0);
+  const rate = Math.max(0, parseInt($('rate').value, 10) || 0);
+  const sats = vb * rate;
+  tween($('feeSats'), sats, v => fmt(v));
+  $('feeUsd').textContent = price > 0 ? '≈ ' + usd(sats / 1e8 * price, 2) + ' al precio actual' : '—';
+}
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function renderDCA() {
+  const chart = $('chart'), bars = $('bars');
+  const dataSig = JSON.stringify([rows, !!key, document.documentElement.dataset.theme]);
+  const redraw = dataSig !== dcaData, p = Math.round(price || 0);
+  if (!redraw && p === dcaPrice) return;
+  dcaData = dataSig; dcaPrice = p;
+  if (!rows.length) {
+    chart.replaceChildren(); bars.replaceChildren();
+    ['dSats', 'dAvg', 'dVal', 'dVs'].forEach(id => { $(id).textContent = '—'; $(id)._v = undefined; });
+    $('dCount').textContent = key ? 'Aún no registras compras' : 'Registro bloqueado'; $('dInv').textContent = '—'; $('dPnl').textContent = '—'; $('dVsTxt').textContent = '—';
+    $('dVs').className = 'num big';
+    chart.append(el('text', { x: 300, y: 130, fill: 'currentColor', opacity: .6, 'font-size': 14, 'text-anchor': 'middle' }, key ? 'Registra tu primera compra' : 'Desbloquea tu registro para ver tus compras'));
+    $('chartInfo').textContent = '';
+    return;
+  }
+  const s = dcaStats(rows, price);
+  tween($('dSats'), s.sats, v => fmt(v));
+  $('dCount').textContent = fmt(s.count) + ' compras · ' + fmt(s.sats / 1e8, 8) + ' BTC';
+  tween($('dAvg'), s.avg, v => usd(v));
+  $('dInv').textContent = 'Invertido: ' + usd(s.usd, 2);
+  tween($('dVal'), s.value, v => usd(v, 2));
+  $('dPnl').innerHTML = '';
+  $('dPnl').append('Resultado no realizado: ');
+  const pn = document.createElement('span'); pn.textContent = pct(s.pnlPct); pn.className = s.pnlPct >= 0 ? 'pos' : 'neg'; $('dPnl').append(pn);
+  tween($('dVs'), s.vsAvgPct, v => pct(v));
+  $('dVs').className = 'num big ' + (isFinite(s.vsAvgPct) ? (s.vsAvgPct < 0 ? 'pos' : 'neg') : '');
+  $('dVsTxt').textContent = isFinite(s.vsAvgPct) ? (s.vsAvgPct < 0 ? 'Hoy compras más barato que tu costo' : 'Hoy compras más caro que tu costo') : 'Esperando precio';
+  if (!redraw && chart.childNodes.length) { drawLines(s); return; }
+
+  // ----- Gráfica -----
+  chart.replaceChildren();
+  const A = cssv('--accent'), A2 = cssv('--accent2'), M = cssv('--mut');
+  const prices = rows.map(r => r.usd / r.sats * 1e8);
+  const X0 = 74, X1 = 590, Y0 = 18, Y1 = 226;
+  const defs = el('defs', {});
+  const lg = el('linearGradient', { id: 'areaG', x1: 0, y1: 0, x2: 0, y2: 1 });
+  lg.append(el('stop', { offset: 0, 'stop-color': A, 'stop-opacity': .35 }), el('stop', { offset: 1, 'stop-color': A, 'stop-opacity': 0 }));
+  defs.append(lg); chart.append(defs);
+  chart._scale = { prices, X0, X1, Y0, Y1 };
+  const { y, x } = scale(s);
+  [0, .5, 1].forEach(k => chart.append(el('line', { x1: X0, y1: Y0 + k * (Y1 - Y0), x2: X1, y2: Y0 + k * (Y1 - Y0), stroke: M, 'stroke-opacity': .18 })));
+  const pts = prices.map((p, i) => [x(i), y(p)]);
+  if (pts.length > 1) {
+    const d = 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+    chart.append(el('path', { d: d + ` L${pts[pts.length - 1][0].toFixed(1)} ${Y1} L${pts[0][0].toFixed(1)} ${Y1} Z`, fill: 'url(#areaG)', class: 'fade' }));
+    const path = el('path', { d, fill: 'none', stroke: A, 'stroke-width': 2.5, 'stroke-linejoin': 'round', class: 'draw' });
+    chart.append(path);
+    let len = 1000; try { len = path.getTotalLength ? path.getTotalLength() : 1000; } catch (_) {}
+    path.style.setProperty('--len', len); path.setAttribute('stroke-dasharray', len);
+  }
+  const g = el('g', { id: 'lines' }); chart.append(g);
+  pts.forEach((p, i) => {
+    const r = rows[i];
+    const c = el('circle', { cx: p[0], cy: p[1], r: rows.length > 60 ? 3.5 : 6, fill: A, stroke: cssv('--bg'), 'stroke-width': 2, class: 'dotp', tabindex: 0 });
+    c.style.animationDelay = (400 + i * 70) + 'ms';
+    const info = fdate(dateOf(r)) + ' · ' + usd(prices[i]) + ' · ' + usd(r.usd, 2) + ' → ' + fmt(r.sats) + ' sats' + (r.via ? ' · ' + r.via : '');
+    c.append(el('title', {}, info));
+    const show = () => { $('chartInfo').textContent = info; };
+    c.addEventListener('click', show); c.addEventListener('focus', show);
+    chart.append(c);
+  });
+  drawLines(s);
+
+  // ----- Barras -----
+  bars.replaceChildren();
+  const maxS = Math.max(...rows.map(r => r.sats)); let top = false;
+  rows.forEach((r, i) => {
+    const b = document.createElement('div');
+    b.style.height = Math.max(2, r.sats / maxS * 100) + '%';
+    b.style.animationDelay = i * 60 + 'ms';
+    if (r.sats === maxS && !top) { b.className = 'top'; top = true; }
+    b.title = fdate(dateOf(r)) + ' · ' + fmt(r.sats) + ' sats';
+    bars.append(b);
+  });
+}
+function scale(s) {
+  const { prices, X0, X1, Y0, Y1 } = $('chart')._scale;
+  const refs = prices.concat([s.avg]).concat(price > 0 ? [price] : []);
+  let lo = Math.min(...refs), hi = Math.max(...refs);
+  const padv = (hi - lo) * 0.1 || hi * 0.05; lo -= padv; hi += padv;
+  return { lo, hi, y: v => Y1 - (v - lo) / (hi - lo) * (Y1 - Y0), x: i => prices.length === 1 ? (X0 + X1) / 2 : X0 + i * (X1 - X0) / (prices.length - 1) };
+}
+function drawLines(s) {
+  const g = $('lines'); if (!g) return;
+  const { X0, X1, Y0, Y1 } = $('chart')._scale, { y, lo, hi } = scale(s);
+  const A2 = cssv('--accent2'), P = s.vsAvgPct < 0 ? cssv('--pos') : cssv('--neg'), M = cssv('--mut');
+  g.replaceChildren(
+    el('text', { x: 4, y: Y0 + 4, fill: M, 'font-size': 11 }, usd(hi)),
+    el('text', { x: 4, y: Y1, fill: M, 'font-size': 11 }, usd(lo)),
+    el('line', { x1: X0, y1: y(s.avg), x2: X1, y2: y(s.avg), stroke: A2, 'stroke-width': 1.5, 'stroke-dasharray': '6 6', class: 'fade' }),
+    el('text', { x: X1, y: y(s.avg) - 6, fill: A2, 'font-size': 11, 'text-anchor': 'end' }, 'Tu promedio ' + usd(s.avg))
+  );
+  if (price > 0) g.append(
+    el('line', { x1: X0, y1: y(price), x2: X1, y2: y(price), stroke: P, 'stroke-width': 2, class: 'fade' }),
+    el('text', { x: X1, y: y(price) + 14, fill: P, 'font-size': 11, 'text-anchor': 'end' }, 'Hoy ' + usd(price))
+  );
+}
+
+// ===== App instalable =====
+if (IS_WEB) {
+  ['umbrel', 'onion'].forEach(v => { const o = $('src').querySelector('option[value="' + v + '"]'); o.disabled = true; o.textContent += ' — solo en archivo local'; });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('install').hidden = false; });
+$('install').addEventListener('click', async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $('install').hidden = true; });
+window.addEventListener('appinstalled', () => { $('install').hidden = true; toast('App instalada. Ábrela desde tu pantalla de inicio.'); });
+async function keepStorage() { try { if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch (_) {} }
+
+// ===== Eventos =====
+$('src').value = DEFAULT_SOURCE;
+$('src').addEventListener('change', e => {
+  source = e.target.value; price = NaN; lastHeight = null; lastPendingSig = '';
+  $('price').textContent = '—'; $('price')._v = undefined; $('status').textContent = 'Conectando…'; $('dot').className = 'dot'; $('dot').style.background = '';
+  refresh();
+});
+$('vb').addEventListener('input', updateFee);
+$('rate').addEventListener('input', () => { rateTouched = true; updateFee(); });
+
+// ===== Registro cifrado (AES-GCM 256 + PBKDF2-SHA256) =====
+const APP_VERSION = '0.6-beta';
+let wantCreate = false;
+const VAULT_KEY = 'btceasy-dca-v1', KDF_ITER = 600000, IDLE_MS = 15 * 60 * 1000;
+const FS_OK = typeof window.showOpenFilePicker === 'function' && typeof window.showSaveFilePicker === 'function';
+const PICK = { types: [{ description: 'Registro BtcEasy (cifrado)', accept: { 'application/json': ['.json'] } }] };
+const enc = new TextEncoder(), dec = new TextDecoder();
+let fileHandle = null, pending = null; // pending.mode: 'open' | 'create'
+function b64(buf) { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
+function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+async function deriveKey(pw, saltBytes, iter) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: saltBytes, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+function validVault(v) { return !!v && v.v === 1 && typeof v.salt === 'string' && typeof v.iv === 'string' && typeof v.ct === 'string' && v.iter > 0; }
+function readLocal() { try { const v = localStorage.getItem(VAULT_KEY); return v ? JSON.parse(v) : null; } catch (_) { return null; } }
+async function readFileVault(h) { let v = null; try { v = JSON.parse(await (await h.getFile()).text()); } catch (_) {} return v; }
+async function save() {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify({ rows })));
+  const txt = JSON.stringify({ v: 1, app: 'btceasy-dca', ver: APP_VERSION, kdf: 'PBKDF2-SHA256', iter: kdfIter, salt: b64(salt), iv: b64(iv), ct: b64(ct) });
+  if (fileHandle) { const w = await fileHandle.createWritable(); await w.write(txt); await w.close(); }
+  else { localStorage.setItem(VAULT_KEY, txt); downloadText(txt, backupName(true)); }
+}
+function backupName(withTime) {
+  const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+  const iso = t.toISOString();
+  return 'btceasy-dca-respaldo-' + iso.slice(0, 10) + (withTime ? '-' + iso.slice(11, 16).replace(':', 'h') : '') + '.json';
+}
+function downloadText(txt, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' }));
+  a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function setMode() {
+  const msgKeep = $('vaultMsg').textContent;
+  $('localExtras').hidden = FS_OK; $('fileStep').hidden = !FS_OK;
+  $('migrate').hidden = !(FS_OK && readLocal() && !fileHandle);
+  if (!FS_OK) {
+    const exists = !!readLocal();
+    pending = exists ? { mode: 'open' } : (wantCreate ? { mode: 'create' } : null);
+    $('newLocal').hidden = exists || wantCreate;
+  }
+  const creating = pending && pending.mode === 'create';
+  $('fileName').hidden = !fileHandle; if (fileHandle) $('fileName').textContent = 'Archivo: ' + fileHandle.name;
+  $('vaultForm').hidden = !pending;
+  $('pw2Wrap').hidden = !creating;
+  $('pw').autocomplete = creating ? 'new-password' : 'current-password';
+  $('vaultBtn').textContent = creating ? 'Crear registro' : 'Desbloquear';
+  if (!pending) {
+    $('vaultTitle').textContent = 'Mi registro';
+    $('vaultHelp').textContent = FS_OK
+      ? 'Tus compras se guardan en un archivo cifrado que tú eliges, por ejemplo en Documentos o en tu volumen cifrado. Abre el tuyo o crea uno nuevo.'
+      : '¿Ya tienes registro? Pulsa «Abrir mi último respaldo» y elige el archivo btceasy-dca-respaldo más reciente de tu carpeta Descargas. No crees una contraseña nueva.';
+  } else if (creating) {
+    $('vaultTitle').textContent = 'Crear mi registro cifrado';
+    $('vaultHelp').textContent = 'Elige una contraseña de al menos 12 caracteres. Si la olvidas, nadie puede recuperar el registro: guárdala como guardas tus respaldos.';
+  } else {
+    $('vaultTitle').textContent = 'Desbloquear mi registro';
+    $('vaultHelp').textContent = 'Escribe tu contraseña.';
+  }
+  $('vaultMsg').textContent = msgKeep;
+}
+function showUnlocked(on) {
+  $('vaultPanel').hidden = on; $('addPanel').hidden = !on; $('listPanel').hidden = !on; $('unlockedActions').hidden = !on;
+}
+function lockNow() {
+  key = null; salt = null; rows = [];
+  if (fileHandle) pending = { mode: 'open' };
+  $('pw').value = ''; $('pw2').value = ''; $('addMsg').textContent = ''; $('vaultMsg').textContent = '';
+  showUnlocked(false); setMode(); renderDCA(); renderList();
+}
+function resetForm() {
+  const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+  $('fDate').value = t.toISOString().slice(0, 10);
+  $('fUsd').value = ''; $('fSats').value = ''; $('fVia').value = '';
+  satsTouched = false; priceTouched = false; prefillPrice();
+}
+function prefillPrice() { if (!priceTouched && price > 0) { $('fPrice').value = Math.round(price); autoSats(); } }
+function autoSats() { if (satsTouched) return; const v = satsFrom(+$('fUsd').value, +$('fPrice').value); $('fSats').value = isFinite(v) ? v : ''; }
+
+function renderList() {
+  const tb = $('listBody'); tb.replaceChildren();
+  $('listCount').textContent = rows.length + (rows.length === 1 ? ' compra' : ' compras');
+  rows.slice().reverse().forEach(r => {
+    const tr = document.createElement('tr');
+    [fdate(dateOf(r)), usd(r.usd, 2), usd(r.usd / r.sats * 1e8), fmt(r.sats), r.via || '—'].forEach((v, i) => {
+      const td = document.createElement('td'); td.textContent = v; if (i > 0 && i < 4) td.className = 'num'; tr.append(td);
+    });
+    const td = document.createElement('td'); const b = document.createElement('button');
+    b.className = 'del'; b.type = 'button'; b.textContent = '✕'; b.setAttribute('aria-label', 'Borrar compra del ' + fdate(dateOf(r)));
+    b.addEventListener('click', async () => {
+      if (!confirm('¿Borrar la compra del ' + fdate(dateOf(r)) + ' por ' + usd(r.usd, 2) + '?')) return;
+      const i = rows.indexOf(r); rows.splice(i, 1);
+      try { await save(); } catch (_) { rows.splice(i, 0, r); alert('No se pudo guardar el cambio.'); }
+      renderDCA(); renderList();
+    });
+    td.append(b); tr.append(td); tb.append(tr);
+  });
+}
+
+$('openFile').addEventListener('click', async () => {
+  $('vaultMsg').textContent = '';
+  try {
+    const [h] = await window.showOpenFilePicker(PICK);
+    if (!validVault(await readFileVault(h))) { $('vaultMsg').textContent = 'Ese archivo no es un registro de BtcEasy.'; return; }
+    fileHandle = h; pending = { mode: 'open' }; setMode(); $('pw').focus();
+  } catch (e) { if (e && e.name !== 'AbortError') $('vaultMsg').textContent = 'No se pudo abrir el archivo.'; }
+});
+$('newFile').addEventListener('click', async () => {
+  $('vaultMsg').textContent = '';
+  try {
+    const h = await window.showSaveFilePicker(Object.assign({ suggestedName: 'btceasy-dca.json' }, PICK));
+    fileHandle = h; pending = { mode: 'create' }; setMode(); $('pw').focus();
+  } catch (e) { if (e && e.name !== 'AbortError') $('vaultMsg').textContent = 'No se pudo crear el archivo.'; }
+});
+
+$('newLocal').addEventListener('click', () => { wantCreate = true; setMode(); $('pw').focus(); });
+
+$('migrate').addEventListener('click', async () => {
+  const v = readLocal(); if (!validVault(v)) return;
+  $('vaultMsg').textContent = '';
+  try {
+    const h = await window.showSaveFilePicker(Object.assign({ suggestedName: 'btceasy-dca.json' }, PICK));
+    const w = await h.createWritable(); await w.write(JSON.stringify(v)); await w.close();
+    fileHandle = h; pending = { mode: 'open' }; setMode();
+    $('vaultMsg').textContent = 'Registro copiado al archivo, sin cambios y cifrado. Desbloquéalo con tu contraseña de siempre.';
+    $('pw').focus();
+  } catch (e) { if (e && e.name !== 'AbortError') $('vaultMsg').textContent = 'No se pudo crear el archivo.'; }
+});
+
+$('vaultForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = $('vaultMsg'); msg.textContent = '';
+  if (!(window.crypto && crypto.subtle)) { msg.textContent = 'Este navegador no permite cifrar aquí.'; return; }
+  if (!pending) return;
+  const pw = $('pw').value, creating = pending.mode === 'create';
+  if (creating && pw.length < 12) { msg.textContent = 'Usa al menos 12 caracteres.'; return; }
+  if (creating && pw !== $('pw2').value) { msg.textContent = 'Las contraseñas no coinciden.'; return; }
+  if (fileHandle) {
+    try {
+      const opts = { mode: 'readwrite' };
+      if ((await fileHandle.queryPermission(opts)) !== 'granted' && (await fileHandle.requestPermission(opts)) !== 'granted') {
+        msg.textContent = 'Necesito permiso para guardar en ese archivo.'; return;
+      }
+    } catch (_) { msg.textContent = 'No se pudo obtener permiso sobre el archivo.'; return; }
+  }
+  $('vaultBtn').disabled = true; msg.textContent = creating ? 'Creando…' : 'Descifrando…';
+  let stage = 'read';
+  try {
+    if (!creating) {
+      const vault = fileHandle ? await readFileVault(fileHandle) : readLocal();
+      if (!validVault(vault)) { stage = 'corrupt'; throw new Error(); }
+      stage = 'decrypt';
+      const k = await deriveKey(pw, unb64(vault.salt), vault.iter);
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(vault.iv) }, k, unb64(vault.ct));
+      const data = JSON.parse(dec.decode(pt));
+      key = k; salt = unb64(vault.salt); kdfIter = vault.iter;
+      rows = Array.isArray(data.rows) ? data.rows.filter(r => r && r.d && r.usd > 0 && r.sats > 0) : [];
+    } else {
+      stage = 'write';
+      salt = crypto.getRandomValues(new Uint8Array(16)); kdfIter = KDF_ITER;
+      key = await deriveKey(pw, salt, kdfIter); rows = [];
+      await save();
+      pending = { mode: 'open' };
+    }
+    rows.sort((a, b) => a.d.localeCompare(b.d));
+    msg.textContent = ''; $('pw').value = ''; $('pw2').value = '';
+    lastActive = Date.now(); showUnlocked(true); resetForm(); renderDCA(); renderList(); keepStorage();
+  } catch (err) {
+    key = null;
+    msg.textContent = stage === 'corrupt' ? 'El registro está dañado o no es de BtcEasy. Abre un respaldo.'
+      : stage === 'decrypt' ? 'Contraseña incorrecta.'
+      : fileHandle ? 'No se pudo guardar en el archivo.' : 'No se pudo guardar. Revisa que el navegador no bloquee el almacenamiento local.';
+  } finally { $('vaultBtn').disabled = false; }
+});
+
+$('fUsd').addEventListener('input', autoSats);
+$('fPrice').addEventListener('input', () => { priceTouched = true; autoSats(); });
+$('fSats').addEventListener('input', () => { satsTouched = true; });
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!key) return;
+  const r = { d: $('fDate').value, usd: Math.round(+$('fUsd').value * 100) / 100, sats: Math.round(+$('fSats').value), via: $('fVia').value.trim().slice(0, 40) };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(r.d) || !(r.usd > 0) || !(r.sats > 0)) { $('addMsg').textContent = 'Revisa fecha, USD y sats.'; return; }
+  rows.push(r); rows.sort((a, b) => a.d.localeCompare(b.d));
+  try { await save(); $('addMsg').textContent = 'Compra guardada.'; }
+  catch (_) { rows.splice(rows.indexOf(r), 1); $('addMsg').textContent = 'No se pudo guardar.'; }
+  resetForm(); renderDCA(); renderList();
+});
+
+$('lock').addEventListener('click', lockNow);
+$('backup').addEventListener('click', async () => {
+  let raw = null;
+  try { raw = fileHandle ? await (await fileHandle.getFile()).text() : localStorage.getItem(VAULT_KEY); } catch (_) {}
+  if (!raw) { alert('No hay registro para respaldar.'); return; }
+  downloadText(raw, backupName(true));
+});
+$('restore').addEventListener('change', e => {
+  const file = e.target.files && e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let v = null; try { v = JSON.parse(reader.result); } catch (_) {}
+    e.target.value = '';
+    if (!validVault(v)) { $('vaultMsg').textContent = 'Ese archivo no es un respaldo válido.'; return; }
+    if (readLocal() && !confirm('Esto reemplaza el registro actual de este navegador. ¿Continuar?')) return;
+    try { localStorage.setItem(VAULT_KEY, JSON.stringify(v)); } catch (_) { $('vaultMsg').textContent = 'No se pudo guardar el respaldo.'; return; }
+    setMode(); $('vaultMsg').textContent = 'Respaldo cargado: ' + file.name + '. Desbloquéalo con tu contraseña.'; $('pw').focus();
+  };
+  reader.readAsText(file);
+});
+
+// Bloqueo automático tras 15 min sin actividad
+['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, () => { lastActive = Date.now(); }, { passive: true }));
+setInterval(() => { if (key && Date.now() - lastActive > IDLE_MS) lockNow(); }, 30000);
+setMode();
+
+$('copy').addEventListener('click', async () => {
+  const text = $('feeds').textContent;
+  try { await navigator.clipboard.writeText(text); $('copyMsg').textContent = 'Copiado.'; }
+  catch (_) {
+    const range = document.createRange(); range.selectNodeContents($('feeds'));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    $('copyMsg').textContent = 'Selección lista: usa Ctrl+C.';
+  }
+});
+
+
+// ===== Inicio =====
+let th = 'nocturno'; try { th = localStorage.getItem('btceasy-theme') || th; } catch (_) {}
+applyTheme(th);
+refresh();
+timer = setInterval(refresh, REFRESH_MS);
+</script>
+</body>
+</html>
